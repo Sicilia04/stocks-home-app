@@ -10,14 +10,14 @@
     "scheme": "stockshome",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stockshome"
+      "bundleIdentifier": "fr.grapps.stockshome"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.stockshome"
+      "package": "fr.grapps.stockshome"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,7 +30,8 @@
           "backgroundColor": "#ffffff",
           "image": "./assets/splash-icon.png"
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }

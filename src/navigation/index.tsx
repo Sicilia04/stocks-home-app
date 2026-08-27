@@ -1,106 +1,105 @@
-import {
-  createBottomTabNavigator,
-  createBottomTabScreen,
-} from '@react-navigation/bottom-tabs';
-import { HeaderButton, Text } from '@react-navigation/elements';
-import { createStaticNavigation } from '@react-navigation/native';
-import {
-  createNativeStackNavigator,
-  createNativeStackScreen,
-} from '@react-navigation/native-stack';
-import { Image } from 'react-native';
-import bell from '../assets/bell.png';
-import newspaper from '../assets/newspaper.png';
-import { Home } from './screens/Home';
-import { NotFound } from './screens/NotFound';
-import { Profile } from './screens/Profile';
-import { Settings } from './screens/Settings';
-import { Updates } from './screens/Updates';
+// navigation/index.tsx
+import {Ionicons} from '@expo/vector-icons';
+import {NavigationContainer} from '@react-navigation/native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React from 'react';
 
-const HomeTabs = createBottomTabNavigator({
-  screens: {
-    Home: createBottomTabScreen({
-      screen: Home,
-      options: {
-        title: 'Feed',
-        tabBarIcon: ({ color, size }) => (
-          <Image
-            source={newspaper}
-            tintColor={color}
-            style={{
-              width: size,
-              height: size,
-            }}
-          />
-        ),
-      },
-    }),
-    Updates: createBottomTabScreen({
-      screen: Updates,
-      options: {
-        tabBarIcon: ({ color, size }) => (
-          <Image
-            source={bell}
-            tintColor={color}
-            style={{
-              width: size,
-              height: size,
-            }}
-          />
-        ),
-      },
-    }),
-  },
-});
+import {HomeScreen} from './screens/app/HomeScreen';
+import {ProductsScreen} from './screens/app/ProductsScreen';
+import {CategoriesScreen} from './screens/app/CategoriesScreen';
+import ProfileScreen from './screens/app/ProfileScreen';
+import {NotFound} from './screens/app/NotFound';
+import LoadingScreen from './screens/LoadingScreen';
 
-const RootStack = createNativeStackNavigator({
-  screens: {
-    HomeTabs: createNativeStackScreen({
-      screen: HomeTabs,
-      options: {
-        title: 'Home',
-        headerShown: false,
-      },
-    }),
-    Profile: createNativeStackScreen({
-      screen: Profile,
-      linking: {
-        path: ':user(@[a-zA-Z0-9-_]+)',
-        parse: {
-          user: (value) => value.replace(/^@/, ''),
-        },
-        stringify: {
-          user: (value) => `@${value}`,
-        },
-      },
-    }),
-    Settings: createNativeStackScreen({
-      screen: Settings,
-      options: ({ navigation }) => ({
-        presentation: 'modal',
-        headerRight: () => (
-          <HeaderButton onPress={navigation.goBack}>
-            <Text>Close</Text>
-          </HeaderButton>
-        ),
-      }),
-    }),
-    NotFound: createNativeStackScreen({
-      screen: NotFound,
-      options: {
-        title: '404',
-      },
-      linking: {
-        path: '*',
-      },
-    }),
-  },
-});
+import {useAuth} from '../context/AuthContext';
+import {AuthStackScreen} from './AuthNavigator';
 
-export const Navigation = createStaticNavigation(RootStack);
+const TAB_ICON_MAP = {
+    HomeApp: 'home',
+    ProductsApp: 'cube',
+    CategoriesApp: 'grid',
+    ProfileApp: 'person',
+} as const;
 
-type RootStackType = typeof RootStack;
+type TabIconName = (typeof TAB_ICON_MAP)[keyof typeof TAB_ICON_MAP];
 
-declare module '@react-navigation/native' {
-  interface RootNavigator extends RootStackType {}
+const tabIcon = (name: TabIconName) =>
+    ({color, size}: {color: string; size: number}) => (
+        <Ionicons name={name} color={color} size={size}/>
+    );
+
+// App tabs
+type AppTabsParamList = {
+    HomeApp: undefined;
+    ProductsApp: undefined;
+    CategoriesApp: undefined;
+    ProfileApp: undefined;
+};
+const AppTabs = createBottomTabNavigator<AppTabsParamList>();
+
+function AppTabNavigator() {
+    return (
+        <AppTabs.Navigator screenOptions={{headerShown: false}}>
+            <AppTabs.Screen
+                name="HomeApp"
+                component={HomeScreen}
+                options={{title: 'Home', tabBarIcon: tabIcon(TAB_ICON_MAP.HomeApp)}}
+            />
+            <AppTabs.Screen
+                name="ProductsApp"
+                component={ProductsScreen}
+                options={{title: 'Products', tabBarIcon: tabIcon(TAB_ICON_MAP.ProductsApp)}}
+            />
+            <AppTabs.Screen
+                name="CategoriesApp"
+                component={CategoriesScreen}
+                options={{title: 'Categories', tabBarIcon: tabIcon(TAB_ICON_MAP.CategoriesApp)}}
+            />
+            <AppTabs.Screen
+                name="ProfileApp"
+                component={ProfileScreen}
+                options={{title: 'Profile', tabBarIcon: tabIcon(TAB_ICON_MAP.ProfileApp)}}
+            />
+        </AppTabs.Navigator>
+    );
+}
+
+// App/Auth/Root stacks
+type RootStackParamList = {App: undefined; Auth: undefined};
+type AppStackParamList = {Tabs: undefined; NotFound: undefined};
+
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const AppStack = createNativeStackNavigator<AppStackParamList>();
+
+function AppStackScreen() {
+    return (
+        <AppStack.Navigator screenOptions={{headerShown: false}}>
+            <AppStack.Screen name="Tabs" component={AppTabNavigator}/>
+            <AppStack.Screen name="NotFound" component={NotFound}/>
+        </AppStack.Navigator>
+    );
+}
+
+
+export type NavigationProps = Omit<React.ComponentProps<typeof NavigationContainer>, 'children'>;
+
+export function Navigation({theme, linking, onReady}: NavigationProps) {
+    const {isAuthenticated, loading} = useAuth();
+
+    if (loading) {
+        return <LoadingScreen/>;
+    }
+
+    return (
+        <NavigationContainer theme={theme} linking={linking} onReady={onReady}>
+            <RootStack.Navigator screenOptions={{headerShown: false}}>
+                {isAuthenticated ? (
+                    <RootStack.Screen name="App" component={AppStackScreen}/>
+                ) : (
+                    <RootStack.Screen name="Auth" component={AuthStackScreen}/>
+                )}
+            </RootStack.Navigator>
+        </NavigationContainer>
+    );
 }

@@ -1,36 +1,48 @@
-import { Assets as NavigationAssets } from '@react-navigation/elements';
-import { DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { Asset } from 'expo-asset';
-import { createURL } from 'expo-linking';
+import {Assets as NavigationAssets} from '@react-navigation/elements';
+import {DarkTheme, DefaultTheme} from '@react-navigation/native';
+import {Asset} from 'expo-asset';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-import { Navigation } from './navigation';
+import * as React from 'react';
+import {Navigation} from './navigation';
+import {AuthProvider} from "./context/AuthContext";
+import {ThemeProvider, useTheme} from "./context/ThemeContext";
 
 Asset.loadAsync([
-  ...NavigationAssets,
-  require('./assets/newspaper.png'),
-  require('./assets/bell.png'),
+    ...NavigationAssets,
+    require('./assets/newspaper.png'),
+    require('./assets/bell.png'),
 ]);
 
 SplashScreen.preventAutoHideAsync();
 
-const linking = {
-  enabled: 'auto' as const,
-  prefixes: [createURL('/')],
-};
+function AppInner() {
+    const {colorScheme} = useTheme();
+
+    const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
+
+    return (
+        <AuthProvider>
+            <Navigation
+                theme={theme}
+                linking={{
+                    enabled: true,
+                    prefixes: [
+                        // Change the scheme to match your app's scheme defined in app.json
+                        'stockshome://',
+                    ],
+                }}
+                onReady={() => {
+                    SplashScreen.hideAsync();
+                }}
+            />
+        </AuthProvider>
+    );
+}
 
 export function App() {
-  const colorScheme = useColorScheme();
-
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
-
-  return (
-    <Navigation
-      theme={theme}
-      linking={linking}
-      onReady={() => {
-        SplashScreen.hideAsync();
-      }}
-    />
-  );
+    return (
+        <ThemeProvider>
+            <AppInner/>
+        </ThemeProvider>
+    );
 }
