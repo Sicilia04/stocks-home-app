@@ -1,3 +1,4 @@
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Assets as NavigationAssets} from '@react-navigation/elements';
 import {DarkTheme, DefaultTheme} from '@react-navigation/native';
 import {Asset} from 'expo-asset';
@@ -18,24 +19,26 @@ SplashScreen.preventAutoHideAsync();
 function AppInner() {
     const {colorScheme} = useTheme();
 
-    const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
+    const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
     return (
-        <AuthProvider>
-            <Navigation
-                theme={theme}
-                linking={{
-                    enabled: true,
-                    prefixes: [
-                        // Change the scheme to match your app's scheme defined in app.json
-                        'stockshome://',
-                    ],
-                }}
-                onReady={() => {
-                    SplashScreen.hideAsync();
-                }}
-            />
-        </AuthProvider>
+        <SafeAreaProvider>
+            <AuthProvider>
+                <Navigation
+                    theme={theme}
+                    linking={{
+                        enabled: true,
+                        prefixes: [
+                            // Change the scheme to match your app's scheme defined in app.json
+                            'stockshome://',
+                        ],
+                    }}
+                    onReady={() => {
+                        SplashScreen.hideAsync();
+                    }}
+                />
+            </AuthProvider>
+        </SafeAreaProvider>
     );
 }
 

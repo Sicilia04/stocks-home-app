@@ -6,8 +6,12 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react';
 
 import {HomeScreen} from './screens/app/HomeScreen';
+import {MovementScreen} from './screens/app/MovementScreen';
+import {MovementFormScreen, type MovementFormRouteProps} from './screens/app/MovementFormScreen';
 import {ProductsScreen} from './screens/app/ProductsScreen';
+import {ProductFormScreen, type ProductFormRouteProps} from './screens/app/ProductFormScreen';
 import {CategoriesScreen} from './screens/app/CategoriesScreen';
+import {CategoryFormScreen, type CategoryFormRouteProps} from './screens/app/CategoryFormScreen';
 import ProfileScreen from './screens/app/ProfileScreen';
 import {NotFound} from './screens/app/NotFound';
 import LoadingScreen from './screens/LoadingScreen';
@@ -17,6 +21,7 @@ import {AuthStackScreen} from './AuthNavigator';
 
 const TAB_ICON_MAP = {
     HomeApp: 'home',
+    MovementApp: 'swap-horizontal',
     ProductsApp: 'cube',
     CategoriesApp: 'grid',
     ProfileApp: 'person',
@@ -32,6 +37,7 @@ const tabIcon = (name: TabIconName) =>
 // App tabs
 type AppTabsParamList = {
     HomeApp: undefined;
+    MovementApp: undefined;
     ProductsApp: undefined;
     CategoriesApp: undefined;
     ProfileApp: undefined;
@@ -45,6 +51,11 @@ function AppTabNavigator() {
                 name="HomeApp"
                 component={HomeScreen}
                 options={{title: 'Home', tabBarIcon: tabIcon(TAB_ICON_MAP.HomeApp)}}
+            />
+            <AppTabs.Screen
+                name="MovementApp"
+                component={MovementScreen}
+                options={{title: 'Mouvement', tabBarIcon: tabIcon(TAB_ICON_MAP.MovementApp)}}
             />
             <AppTabs.Screen
                 name="ProductsApp"
@@ -67,16 +78,27 @@ function AppTabNavigator() {
 
 // App/Auth/Root stacks
 type RootStackParamList = {App: undefined; Auth: undefined};
-type AppStackParamList = {Tabs: undefined; NotFound: undefined};
+type AppStackParamList = {
+    Tabs: undefined;
+    NotFound: undefined;
+    MovementForm: MovementFormRouteProps;
+    ProductForm: ProductFormRouteProps | undefined;
+    CategoryForm: CategoryFormRouteProps | undefined;
+};
+
+export type {AppStackParamList};
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
 
 function AppStackScreen() {
     return (
-        <AppStack.Navigator screenOptions={{headerShown: false}}>
-            <AppStack.Screen name="Tabs" component={AppTabNavigator}/>
-            <AppStack.Screen name="NotFound" component={NotFound}/>
+        <AppStack.Navigator screenOptions={{headerShown: true, headerStyle: {backgroundColor: '#fff'}, headerTintColor: '#212121'}}>
+            <AppStack.Screen name="Tabs" options={{headerShown: false}} component={AppTabNavigator}/>
+            <AppStack.Screen name="NotFound" options={{headerShown: false}} component={NotFound}/>
+            <AppStack.Screen name="MovementForm" component={MovementFormScreen} options={{title: 'Mouvement de stock', presentation: 'modal'}}/>
+            <AppStack.Screen name="ProductForm" component={ProductFormScreen} options={({route}) => ({title: route.params?.productId != null ? 'Modifier le produit' : 'Nouveau produit'})}/>
+            <AppStack.Screen name="CategoryForm" component={CategoryFormScreen} options={({route}) => ({title: route.params?.categoryId != null ? 'Modifier la catégorie' : 'Nouvelle catégorie'})}/>
         </AppStack.Navigator>
     );
 }

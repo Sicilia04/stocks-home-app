@@ -31,7 +31,13 @@
           "image": "./assets/splash-icon.png"
         }
       ],
-      "expo-secure-store"
+        "expo-secure-store",
+        [
+          "expo-camera",
+          {
+            "cameraPermission": "Autoriser Stocks Home a utiliser la camera"
+          }
+        ]
     ]
   }
 }

@@ -14,6 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useForm, Controller} from 'react-hook-form';
 import {z} from 'zod';
 import {zodResolver} from '@hookform/resolvers/zod';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAuth} from "../../../context/AuthContext";
 import {User} from "../../../types/user";
 import {getToken} from "../../../api/auth";
@@ -33,6 +34,7 @@ export default function LoginScreen() {
     });
     const {login, applyToken, authError, clearError} = useAuth();
     const [loading, setLoading] = useState(false);
+    const insets = useSafeAreaInsets();
 
 
     // 🔹 Dès qu’une erreur apparaît dans le contexte, on l’affiche en Alert
@@ -70,8 +72,11 @@ export default function LoginScreen() {
     };
 
     return (
-        // <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View style={styles.container}>
+        <KeyboardAvoidingView
+            style={{flex: 1}}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <View style={[styles.container, {paddingTop: insets.top}]}>
                 <Text style={styles.title}>Connexion</Text>
 
                 <View style={styles.field}>
@@ -120,6 +125,6 @@ export default function LoginScreen() {
                 </TouchableOpacity>
 
             </View>
-        // </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
     );
 }

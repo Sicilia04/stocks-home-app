@@ -37,7 +37,7 @@ export function ThemeProvider({children}: {children: ReactNode}) {
     }, []);
 
     const colorScheme: 'light' | 'dark' =
-        preferred === 'system' ? (systemScheme ?? 'light') : preferred;
+        preferred === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : preferred;
 
     const toggle = useCallback(() => {
         const next = colorScheme === 'dark' ? 'light' : 'dark';

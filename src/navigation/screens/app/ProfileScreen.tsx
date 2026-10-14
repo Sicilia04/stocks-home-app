@@ -1,5 +1,6 @@
 import {Text} from '@react-navigation/elements';
 import {StyleSheet, View, Alert, TouchableOpacity, ScrollView, Switch} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAuth} from "../../../context/AuthContext";
 import {useTheme} from "../../../context/ThemeContext";
 import React from "react";
@@ -22,11 +23,12 @@ const getInitials = (name: string) =>
 export default function ProfileScreen() {
     const {user, logout} = useAuth();
     const {isDark, toggle} = useTheme();
+    const insets = useSafeAreaInsets();
     const [notificationsEnabled, setNotificationsEnabled] = React.useState(false);
 
     if (!user) {
         return (
-            <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+            <View style={[styles.container, {justifyContent: 'center', alignItems: 'center', paddingTop: insets.top}]}>
                 <Text style={styles.infoLabel}>Aucun utilisateur connecté</Text>
             </View>
         );
@@ -47,7 +49,7 @@ export default function ProfileScreen() {
     return (
         <ScrollView style={styles.container}>
             {/* Avatar et infos */}
-            <View style={styles.avatarContainer}>
+            <View style={[styles.avatarContainer, {paddingTop: insets.top + 16}]}>
                 <View style={styles.avatar}>
                     <Text style={styles.avatarText}>{initials}</Text>
                 </View>
