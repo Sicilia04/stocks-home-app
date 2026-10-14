@@ -24,6 +24,7 @@ import {playBeep} from '../../../utils/beep';
 
 export type MovementFormRouteProps = {
     kind: MovementKind;
+    barcode?: string;
 };
 
 const EAN_REGEX = /^(?:\d{8}|\d{13})$/;
@@ -75,9 +76,12 @@ function getErrorMessage(err: unknown): string {
 export function MovementFormScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList, 'MovementForm'>>();
     const route = useRoute();
-    const kind = (route.params as MovementFormRouteProps | undefined)?.kind ?? 'in';
+    const params = route.params as MovementFormRouteProps | undefined;
+    const kind = params?.kind ?? 'in';
+    const initialBarcode = params?.barcode;
 
-    const [ean, setEan] = useState('');
+    const validInitialBarcode = initialBarcode && EAN_REGEX.test(initialBarcode) ? initialBarcode : '';
+    const [ean, setEan] = useState(validInitialBarcode);
     const [qty, setQty] = useState('1');
     const [looked, setLooked] = useState<Product | null>(null);
     const [lookupError, setLookupError] = useState<string | null>(null);
@@ -134,6 +138,12 @@ export function MovementFormScreen() {
         },
         [products, productsError],
     );
+
+    useEffect(() => {
+        if (validInitialBarcode && !loadingProducts && products.length > 0) {
+            lookup(validInitialBarcode);
+        }
+    }, [validInitialBarcode, loadingProducts, products.length, lookup]);
 
     const handleEanChange = (text: string) => {
         const digits = text.replace(/\D/g, '');
@@ -336,7 +346,7 @@ export function MovementFormScreen() {
                                 </View>
                             )}
                             <TextInput
-                                autoFocus
+                                autoFocus={!validInitialBarcode}
                                 style={styles.input}
                                 placeholder="Scanner ou saisir le code"
                                 placeholderTextColor="#9e9e9e"
@@ -387,6 +397,7 @@ export function MovementFormScreen() {
                                 keyboardType="number-pad"
                                 autoCapitalize="none"
                                 autoCorrect={false}
+                                autoFocus={!!validInitialBarcode}
                                 value={qty}
                                 onChangeText={text => setQty(text.replace(/\D/g, '').slice(0, 6))}
                             />
