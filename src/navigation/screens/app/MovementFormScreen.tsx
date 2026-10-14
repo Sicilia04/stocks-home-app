@@ -20,6 +20,7 @@ import {Product} from '../../../types/product';
 import {MovementKind} from '../../../types/movement';
 import type {AppStackParamList} from '../../index';
 import BarcodeScanner from './components/BarcodeScanner';
+import {playBeep} from '../../../utils/beep';
 
 export type MovementFormRouteProps = {
     kind: MovementKind;
@@ -91,6 +92,9 @@ export function MovementFormScreen() {
     const [showCamera, setShowCamera] = useState(false);
     const [cameraSession, setCameraSession] = useState(0);
 
+    const [outStatus, setOutStatus] = useState<{kind: 'success' | 'error'; message: string} | null>(null);
+    const [outBusy, setOutBusy] = useState(false);
+
     const loadProducts = useCallback(async () => {
         setLoadingProducts(true);
         setProductsError(null);
@@ -145,12 +149,17 @@ export function MovementFormScreen() {
 
     const openCamera = () => {
         setCameraSession(s => s + 1);
+        if (kind === 'out') setOutStatus(null);
         setShowCamera(true);
     };
 
     const handleCameraScan = (value: string) => {
-        setShowCamera(false);
         const clean = value.trim();
+        if (kind === 'out') {
+            handleOutScan(clean);
+            return;
+        }
+        setShowCamera(false);
         if (!EAN_REGEX.test(clean)) {
             setEan(clean);
             setLooked(null);
@@ -158,6 +167,39 @@ export function MovementFormScreen() {
             return;
         }
         handleEanChange(clean);
+    };
+
+    const handleOutScan = (code: string) => {
+        if (!EAN_REGEX.test(code)) {
+            setOutStatus({kind: 'error', message: 'Code-barres non reconnu (EAN-8 ou EAN-13).'});
+            return;
+        }
+        if (outBusy) return;
+        const found = products.find(p => p.barcode === code);
+        if (!found) {
+            setOutStatus({kind: 'error', message: `Aucun produit ne correspond au code ${code}.`});
+            return;
+        }
+        if (found.quantity < 1) {
+            setOutStatus({kind: 'error', message: `Stock insuffisant : 0 en stock pour ${found.name}.`});
+            return;
+        }
+        setOutBusy(true);
+        setOutStatus({kind: 'success', message: `${found.name} · retrait en cours…`});
+        createMovement({product_id: found.id, kind: 'out', quantity: 1})
+            .then(() => {
+                setProducts(prev =>
+                    prev.map(p => (p.id === found.id ? {...p, quantity: p.quantity - 1} : p)),
+                );
+                setOutStatus({kind: 'success', message: `${found.name} · retiré, restant : ${found.quantity - 1}`});
+                playBeep();
+            })
+            .catch(err => {
+                setOutStatus({kind: 'error', message: getErrorMessage(err)});
+            })
+            .finally(() => {
+                setOutBusy(false);
+            });
     };
 
     const confirm = async () => {
@@ -218,6 +260,69 @@ export function MovementFormScreen() {
                         )}
                         <TouchableOpacity style={styles.finishBtn} onPress={() => navigation.goBack()} accessibilityRole="button">
                             <Text style={styles.finishBtnText}>Terminer</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : kind === 'out' ? (
+                    <View style={styles.outBlock}>
+                        <View style={styles.outHeader}>
+                            <Ionicons name="trending-down" size={22} color="#e53935"/>
+                            <Text style={styles.outTitle}>Sortie de stock</Text>
+                            <Text style={styles.outSub}>
+                                Chaque scan retire 1 pièce du produit scanné.
+                            </Text>
+                        </View>
+
+                        {loadingProducts && (
+                            <View style={styles.loadingRow}>
+                                <ActivityIndicator size="small" color="#e53935"/>
+                                <Text style={styles.loadingText}>Chargement des produits…</Text>
+                            </View>
+                        )}
+                        {productsError && <Text style={styles.errorText}>{productsError}</Text>}
+
+                        <TouchableOpacity
+                            style={[styles.outRetireBtn, outBusy && styles.outRetireBtnBusy]}
+                            onPress={openCamera}
+                            disabled={outBusy}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ouvrir la caméra pour retirer une pièce"
+                        >
+                            <Ionicons name="barcode-outline" size={28} color="#fff"/>
+                            {outBusy ? (
+                                <Text style={styles.outRetireBtnText}>Retrait en cours…</Text>
+                            ) : (
+                                <Text style={styles.outRetireBtnText}>Retirer</Text>
+                            )}
+                        </TouchableOpacity>
+
+                        {outStatus && (
+                            <View style={[styles.outStatusCard, outStatus.kind === 'error' ? styles.outStatusError : styles.outStatusSuccess]}>
+                                <Ionicons
+                                    name={outStatus.kind === 'error' ? 'close-circle' : 'checkmark-circle'}
+                                    size={20}
+                                    color={outStatus.kind === 'error' ? '#c62828' : '#2e7d32'}
+                                />
+                                <Text
+                                    style={[
+                                        styles.outStatusText,
+                                        outStatus.kind === 'error' ? styles.outStatusTextError : styles.outStatusTextSuccess,
+                                    ]}
+                                >
+                                    {outStatus.message}
+                                </Text>
+                            </View>
+                        )}
+
+                        <Text style={styles.outHint}>
+                            Astuce : en mode sortie, la caméra reste ouverte après chaque scan pour continuer à retirer.
+                        </Text>
+
+                        <TouchableOpacity
+                            style={styles.outCloseBtn}
+                            onPress={() => navigation.goBack()}
+                            accessibilityRole="button"
+                        >
+                            <Text style={styles.outCloseBtnText}>Terminer</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
@@ -320,7 +425,13 @@ export function MovementFormScreen() {
                 animationType="slide"
                 onRequestClose={() => setShowCamera(false)}
             >
-                <BarcodeScanner key={cameraSession} onScanned={handleCameraScan} onCancel={() => setShowCamera(false)}/>
+                <BarcodeScanner
+                    key={cameraSession}
+                    continuous={kind === 'out'}
+                    feedback={kind === 'out' && outStatus ? {kind: outStatus.kind, text: outStatus.message} : null}
+                    onScanned={handleCameraScan}
+                    onCancel={() => setShowCamera(false)}
+                />
             </Modal>
         </View>
     );
@@ -361,4 +472,21 @@ const styles = StyleSheet.create({
     cancelText: {color: '#757575', fontSize: 15, fontWeight: '600'},
     saveBtn: {backgroundColor: '#03A9F4', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, alignItems: 'center', justifyContent: 'center'},
     saveText: {color: '#fff', fontSize: 15, fontWeight: '600'},
+
+    outBlock: {gap: 14, alignItems: 'stretch'},
+    outHeader: {gap: 6, marginBottom: 4},
+    outTitle: {fontSize: 20, fontWeight: '800', color: '#212121'},
+    outSub: {color: '#757575', fontSize: 14, textAlign: 'center'},
+    outRetireBtn: {backgroundColor: '#e53935', paddingVertical: 18, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12},
+    outRetireBtnBusy: {opacity: 0.65},
+    outRetireBtnText: {color: '#fff', fontSize: 18, fontWeight: '700'},
+    outStatusCard: {flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14},
+    outStatusSuccess: {backgroundColor: '#e8f5e9', borderColor: '#a5d6a7', borderWidth: 1},
+    outStatusError: {backgroundColor: '#ffebee', borderColor: '#ef9a9a', borderWidth: 1},
+    outStatusText: {flex: 1, fontSize: 14},
+    outStatusTextSuccess: {color: '#1b5e20'},
+    outStatusTextError: {color: '#c62828'},
+    outHint: {color: '#616161', fontSize: 13, textAlign: 'center', marginTop: 4},
+    outCloseBtn: {backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 8},
+    outCloseBtnText: {color: '#757575', fontSize: 15, fontWeight: '600'},
 });
