@@ -73,7 +73,7 @@ export default function BarcodeScanner({
                     if (captured.current) return;
                     const now = Date.now();
                     if (continuous) {
-                        // Anti-répétition : scanner le même code à répétition est inutile.
+                        // Anti-repeat: scanning the same code repeatedly is useless.
                         const cooldown = lastCode.current === data ? SAME_CODE_COOLDOWN_MS : DIFF_CODE_COOLDOWN_MS;
                         const elapsed = now - lastScanAt.current;
                         if (elapsed < cooldown) {

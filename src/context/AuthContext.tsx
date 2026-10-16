@@ -14,10 +14,10 @@ export function AuthProvider({children}: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true); // pour signaler la restauration en cours
-    const [authError, setAuthError] = useState<string | null>(null); // Déclaration de l’état erreur
+    const [loading, setLoading] = useState(true); // signals that session restore is in progress
+    const [authError, setAuthError] = useState<string | null>(null); // auth error state
 
-    // Logout impératif (sans dépendre des setStates) pour être appelé depuis l'interceptor 401
+    // Imperative logout (no setStates to await) so it can be called from the 401 interceptor
     const forceLogout = () => {
         SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
         SecureStore.deleteItemAsync(REFRESH_KEY).catch(() => {});
@@ -30,13 +30,13 @@ export function AuthProvider({children}: { children: ReactNode }) {
     const forceLogoutRef = useRef(forceLogout);
     forceLogoutRef.current = forceLogout;
 
-    // Enregistre le handler 401 de l'instance Axios : toute session expirée purge l'état
+    // Register the Axios 401 handler: any expired session clears the state
     useEffect(() => {
         setUnauthorizedHandler(() => forceLogoutRef.current());
         return () => setUnauthorizedHandler(null);
     }, []);
 
-    // Restaurer la session au démarrage
+    // Restore the session on startup
     useEffect(() => {
         (async () => {
             const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -50,8 +50,8 @@ export function AuthProvider({children}: { children: ReactNode }) {
         })();
     }, []);
 
-    // Stockage du token (et refresh optionnel) SANS toucher au état de session.
-    // Sert à avoir le token persisté AVANT un appel API authentifié (ex: GET /users/me/).
+    // Stores the token (and optional refresh) WITHOUT touching the session state.
+    // Used to have the token persisted BEFORE an authenticated API call (e.g. GET /users/me/).
     const applyToken = async (access: string, refresh?: string) => {
         await SecureStore.setItemAsync(TOKEN_KEY, access);
         if (refresh) {
@@ -60,7 +60,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
         setToken(access);
     };
 
-    // Fonction login stocke le token et met à jour le statut
+    // Login: stores the token and updates the authenticated status
     const login = async (token: string, user: User) => {
         try {
             await SecureStore.setItemAsync(TOKEN_KEY, token);
@@ -75,7 +75,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
         }
     };
 
-    // Fonction logout supprime les tokens et met à jour le statut
+    // Logout: deletes the tokens and updates the status
     const logout = async () => {
         try {
             await SecureStore.deleteItemAsync(TOKEN_KEY);
@@ -103,7 +103,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {
-        throw new Error('useAuth doit être utilisé dans un AuthProvider');
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
 }

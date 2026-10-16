@@ -50,5 +50,5 @@ export default StyleSheet.create({
     },
     link: {color: COLORS.textSecondary, marginTop: 18, fontWeight: '600'},
     linkMuted: {color: COLORS.mutedBlack, marginTop: 8},
-    // Ajoute ici tous les styles communs à plusieurs écrans
+    // Add here any styles shared across multiple screens
 });

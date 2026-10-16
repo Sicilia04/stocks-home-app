@@ -19,6 +19,6 @@ export async function updateCategory(categoryId: number, payload: CategoryWriteI
 }
 
 export async function deleteCategory(categoryId: number) {
-    // django-ninja renvoie 204 No Content
+    // django-ninja returns 204 No Content
     return axios.delete(`/stock/categories/${categoryId}/`);
 }

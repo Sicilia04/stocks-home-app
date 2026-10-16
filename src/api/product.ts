@@ -19,6 +19,6 @@ export async function updateProduct(productId: number, payload: ProductWriteInpu
 }
 
 export async function deleteProduct(productId: number) {
-    // django-ninja renvoie 204 No Content
+    // django-ninja returns 204 No Content
     return axios.delete(`/stock/products/${productId}/`);
 }

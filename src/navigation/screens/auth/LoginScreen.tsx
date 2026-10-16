@@ -37,7 +37,7 @@ export default function LoginScreen() {
     const insets = useSafeAreaInsets();
 
 
-    // 🔹 Dès qu’une erreur apparaît dans le contexte, on l’affiche en Alert
+    // As soon as an error appears in the context, surface it in an Alert
     useEffect(() => {
         if (authError) {
             Alert.alert('Erreur', authError, [
@@ -49,11 +49,11 @@ export default function LoginScreen() {
     const onSubmit = async (form: { username: string, password: string }) => {
         try {
             setLoading(true);
-            // Appel à ton API backend Django pour obtenir le token JWT
+            // Call the Django backend API to obtain the JWT token
             const {data} = await getToken(form.username, form.password)
-            // Persister le token AVANT l'appel authentifié ci-dessous (l'interceptor le lit de SecureStore)
+            // Persist the token BEFORE the authenticated call below (the interceptor reads it from SecureStore)
             await applyToken(String(data.access), data.refresh);
-            // Appel à l’API pour récupérer les infos utilisateur
+            // Call the API to fetch the user information
             const response = await getMe();
 
             if (!response.data) {

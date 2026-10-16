@@ -1,6 +1,26 @@
 {
   "name": "stocks-home",
   "version": "1.0.0",
+  "description": "Stocks Home — a cross-platform mobile app for stock/inventory management built with React Native, Expo and React Navigation.",
+  "author": "Florian Alu <https://github.com/Sicilia04>",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "react-native",
+    "expo",
+    "inventory",
+    "stock-management",
+    "barcode",
+    "mobile",
+    "react-navigation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sicilia04/stocks-home.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sicilia04/stocks-home/issues"
+  },
+  "homepage": "https://github.com/Sicilia04/stocks-home#readme",
   "main": "index.tsx",
   "scripts": {
     "start": "expo start --dev-client",

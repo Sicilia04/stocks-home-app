@@ -8,11 +8,11 @@ export type PreferredScheme = 'system' | 'light' | 'dark';
 
 interface ThemeContextType {
     preferred: PreferredScheme;
-    /** Valeur effective après resolution système ('light' | 'dark') */
+    /** Effective value after resolving the system scheme ('light' | 'dark') */
     colorScheme: 'light' | 'dark';
     isDark: boolean;
     setPreferred: (value: PreferredScheme) => void;
-    /** Bascule dark/light (force une valeur, ne suit plus le système) */
+    /** Toggles dark/light (forces a value, no longer follows the system) */
     toggle: () => void;
 }
 
@@ -22,7 +22,7 @@ export function ThemeProvider({children}: {children: ReactNode}) {
     const systemScheme = useColorScheme();
     const [preferred, setPreferredState] = useState<PreferredScheme>('system');
 
-    // Restaure la préférence au démarrage
+    // Restore the stored preference on startup
     useEffect(() => {
         SecureStore.getItemAsync(THEME_KEY).then(stored => {
             if (stored === 'light' || stored === 'dark' || stored === 'system') {
@@ -60,7 +60,7 @@ export function ThemeProvider({children}: {children: ReactNode}) {
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) {
-        throw new Error('useTheme doit être utilisé dans un ThemeProvider');
+        throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
 }

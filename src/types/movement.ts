@@ -1,8 +1,8 @@
 export type MovementKind = 'in' | 'out';
 
 export interface StockMovementWriteInput {
-    // L'API exige la cle "product_id" en entree (ninja expose les FK sous
-    // leur attname) ; en sortie le champ s'appelle "product".
+    // The API expects the key "product_id" on input (ninja exposes FKs by
+    // their attname); on output the field is named "product".
     product_id: number;
     kind: MovementKind;
     quantity: number;

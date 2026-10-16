@@ -13,8 +13,8 @@ export interface Product {
 export interface ProductWriteInput {
     name: string;
     barcode: string;
-    // L'API exige la cle "category_id" en entree (ninja expose les FK sous
-    // leur attname) ; en sortie le champ s'appelle "category".
+    // The API expects the key "category_id" on input (ninja exposes FKs by
+    // their attname); on output the field is named "category".
     category_id: number;
     min_quantity: number;
     is_active: boolean;

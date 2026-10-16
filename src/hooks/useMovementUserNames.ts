@@ -1,3 +1,6 @@
+// src/hooks/useMovementUserNames.ts
+// Resolves movement user ids to display names, caching them and showing
+// "Vous" for the current user. Only fetches the users that are missing.
 import {useEffect, useState} from 'react';
 import {getUser} from '../api/user';
 import {useAuth} from '../context/AuthContext';

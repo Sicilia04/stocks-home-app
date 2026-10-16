@@ -8,7 +8,7 @@ export type CheckboxProps = {
     label?: string;
     error?: string;
     disabled?: boolean;
-    size?: number;        // taille du carré
+    size?: number;        // size of the square
 };
 
 export const Checkbox = memo(function Checkbox({
@@ -56,7 +56,7 @@ export const Checkbox = memo(function Checkbox({
                             height: size * 0.6,
                             borderRadius: 2,
                             backgroundColor: 'white',
-                            opacity: 0.0, // mettre 0.0 si on veut un carré plein; sinon implémenter une icône/tick si besoin
+                             opacity: 0.0, // set to 0.0 for a solid square; otherwise implement an icon/tick if needed
                         }}
                     />
                 ) : null}

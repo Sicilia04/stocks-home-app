@@ -5,7 +5,7 @@ import {API_BASE} from "../config/env";
 
 const TOKEN_KEY = 'userToken';
 
-// Création d'une instance Axios
+// Create an Axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE,
   headers: {
@@ -13,7 +13,7 @@ const axiosInstance = axios.create({
   },
 });
 
-// Ajoute automatiquement le token JWT à chaque requête si présent
+// Automatically attach the JWT token to every request if present
 axiosInstance.interceptors.request.use(
     async (config) => {
     const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -25,7 +25,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Gestion des 401 : on notifie un handler externe (le AuthContext) pour purger la session
+// 401 handling: notify an external handler (the AuthContext) to purge the session
 let unauthorizedHandler: (() => void) | null = null;
 
 export function setUnauthorizedHandler(handler: (() => void) | null) {

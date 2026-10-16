@@ -7,10 +7,9 @@ let audioModeReady: Promise<void> | null = null;
 function ensureAudioMode(): Promise<void> {
     if (!audioModeReady) {
         audioModeReady = setAudioModeAsync({
-            // La caméra est active pendant les retraits : on force la session
-            // audio iOS en "playAndRecord" pour que la sortie ne soit pas
-            // coupée par la session d'enregistrement, et qu'elle passe par
-            // le haut-parleur (pas l'oreillette).
+            // The camera is active during stock removals: force the iOS audio
+            // session to "playAndRecord" so the output is not cut off by the
+            // recording session, and routes through the speaker (not the earpiece).
             allowsRecording: true,
             shouldRouteThroughEarpiece: false,
             interruptionMode: 'mixWithOthers',

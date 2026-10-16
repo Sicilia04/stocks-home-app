@@ -1,7 +1,7 @@
 // src/config/env.ts
-// Charge l'URL de l'API depuis les fichiers .env gérés par Expo CLI.
-// Chaque .env par environnement définit EXPO_PUBLIC_API_URL qui est inlinée
-// par Metro à la compilation (pas à l'exécution).
+// Loads the API URL from the .env files managed by Expo CLI.
+// Each per-environment .env defines EXPO_PUBLIC_API_URL, which is inlined
+// by Metro at compile time (not at runtime).
 import { z } from 'zod';
 
 const url = z
