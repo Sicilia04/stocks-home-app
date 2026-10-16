@@ -1,5 +1,14 @@
 // src/config/env.ts
-// Dev : IP du réseau local du backend Django.
-// Prod : remplacer API_BASE_URL par l'URL du site web en production.
-export const API_BASE_URL = 'http://192.168.1.1:8000';
-export const API_BASE = API_BASE_URL + '/api';
+// Charge l'URL de l'API depuis les fichiers .env gérés par Expo CLI.
+// Chaque .env par environnement définit EXPO_PUBLIC_API_URL qui est inlinée
+// par Metro à la compilation (pas à l'exécution).
+import { z } from 'zod';
+
+const url = z
+  .string({ error: () => 'EXPO_PUBLIC_API_URL manquant (voir .env, .env.development, .env.production)' })
+  .min(1, 'EXPO_PUBLIC_API_URL est vide')
+  .refine(v => /^https?:\/\/\S+/.test(v), 'URL invalide : doit commencer par http(s)://')
+  .parse(process.env.EXPO_PUBLIC_API_URL);
+
+export const API_BASE = url;
+export const API_BASE_URL = url.replace(/\/api\/?$/, '');
