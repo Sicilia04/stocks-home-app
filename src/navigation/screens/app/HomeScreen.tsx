@@ -13,7 +13,10 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {listProducts} from '../../../api/product';
+import {listMovements} from '../../../api/movement';
 import {Product} from '../../../types/product';
+import {StockMovement} from '../../../types/movement';
+import {useMovementUserNames} from '../../../hooks/useMovementUserNames';
 import type {AppStackParamList} from '../../index';
 
 function toMessage(value: unknown): string | null {
@@ -66,6 +69,7 @@ export function HomeScreen() {
     const insets = useSafeAreaInsets();
 
     const [products, setProducts] = useState<Product[]>([]);
+    const [movements, setMovements] = useState<StockMovement[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [listError, setListError] = useState<string | null>(null);
@@ -78,8 +82,9 @@ export function HomeScreen() {
         }
         setListError(null);
         try {
-            const {data} = await listProducts();
-            setProducts(Array.isArray(data) ? data : []);
+            const [productsRes, movementsRes] = await Promise.all([listProducts(), listMovements()]);
+            setProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
+            setMovements(Array.isArray(movementsRes.data) ? movementsRes.data : []);
         } catch (err) {
             setListError(getErrorMessage(err));
         } finally {
@@ -104,6 +109,26 @@ export function HomeScreen() {
     const lowStockItems = useMemo(() => {
         return products.filter(p => p.is_low_stock);
     }, [products]);
+
+    const lastMovements = useMemo(() => {
+        return [...movements]
+            .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+            .slice(0, 5);
+    }, [movements]);
+
+    const {getUserName} = useMovementUserNames(lastMovements.map(m => m.user));
+
+    const productNames = useMemo(() => {
+        const map = new Map<number, string>();
+        products.forEach(p => map.set(p.id, p.name));
+        return map;
+    }, [products]);
+
+    const formatMovementDate = (iso: string) => {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+    };
 
     const openReplenish = (product: Product) => {
         navigation.navigate('MovementForm', {kind: 'in', barcode: product.barcode});
@@ -179,6 +204,61 @@ export function HomeScreen() {
                                     </TouchableOpacity>
                                 ))}
                         </View>
+
+                        <View style={styles.movementCard}>
+                            <View style={styles.movementHeader}>
+                                <Ionicons name="swap-horizontal" size={20} color="#1565c0"/>
+                                <Text style={styles.movementTitle}>Derniers mouvements</Text>
+                            </View>
+
+                            {!listError && lastMovements.length === 0 && (
+                                <View style={styles.movementEmpty}>
+                                    <Ionicons name="infinite" size={20} color="#9e9e9e"/>
+                                    <Text style={styles.movementEmptyText}>Aucun mouvement enregistré pour le moment.</Text>
+                                </View>
+                            )}
+
+                            {!listError &&
+                                lastMovements.map(movement => {
+                                    const isIn = movement.kind === 'in';
+                                    return (
+                                        <View style={styles.movementRow} key={movement.id}>
+                                            <View
+                                                style={[styles.movementBadge, isIn ? styles.movementBadgeIn : styles.movementBadgeOut]}
+                                            >
+                                                <Ionicons
+                                                    name={isIn ? 'arrow-down' : 'arrow-up'}
+                                                    size={14}
+                                                    color={isIn ? '#2e7d32' : '#c62828'}
+                                                />
+                                                <Text style={[styles.movementBadgeText, isIn ? styles.movementBadgeTextIn : styles.movementBadgeTextOut]}>
+                                                    {isIn ? 'Entrée' : 'Sortie'} · {movement.quantity}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.movementInfo}>
+                                                <Text style={styles.movementProduct} numberOfLines={1}>
+                                                    {productNames.get(movement.product) ?? `Réf. ${movement.product}`}
+                                                </Text>
+                                                <Text style={styles.movementUser}>
+                                                    <Ionicons name="person-outline" size={12} color="#757575"/>
+                                                    {getUserName(movement.user)}
+                                                </Text>
+                                                <Text style={styles.movementDate}>{formatMovementDate(movement.created)}</Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+
+                            <TouchableOpacity
+                                style={styles.movementLink}
+                                onPress={() => navigation.navigate('MovementsList')}
+                                accessibilityRole="button"
+                                accessibilityLabel="Voir tous les mouvements"
+                            >
+                                <Text style={styles.movementLinkText}>Voir tout</Text>
+                                <Ionicons name="chevron-forward" size={16} color="#1565c0"/>
+                            </TouchableOpacity>
+                        </View>
                     </>
                 )}
             </ScrollView>
@@ -234,4 +314,50 @@ const styles = StyleSheet.create({
 
     errorBox: {flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingVertical: 6},
     errorText: {color: '#ff6b6b', fontSize: 13, flex: 1},
+
+    movementCard: {
+        marginTop: 16,
+        padding: 14,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#bbdefb',
+        backgroundColor: '#f5faff',
+    },
+    movementHeader: {flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12},
+    movementTitle: {fontSize: 16, fontWeight: '600', color: '#1565c0'},
+
+    movementRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#d6e6fa',
+    },
+    movementBadge: {
+        minWidth: 64,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+    },
+    movementBadgeIn: {backgroundColor: '#e8f5e9', borderColor: '#a5d6a7'},
+    movementBadgeOut: {backgroundColor: '#ffebee', borderColor: '#ef9a9a'},
+    movementBadgeText: {fontSize: 13, fontWeight: '700'},
+    movementBadgeTextIn: {color: '#2e7d32'},
+    movementBadgeTextOut: {color: '#c62828'},
+
+    movementInfo: {flex: 1},
+    movementProduct: {color: '#222', fontSize: 14, fontWeight: '600'},
+    movementUser: {color: '#757575', fontSize: 12, marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 3},
+    movementDate: {color: '#757575', fontSize: 12, marginTop: 2},
+    movementEmpty: {flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8},
+    movementEmptyText: {color: '#9e9e9e', fontSize: 13},
+
+    movementLink: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 10},
+    movementLinkText: {color: '#1565c0', fontSize: 13, fontWeight: '600'},
 });

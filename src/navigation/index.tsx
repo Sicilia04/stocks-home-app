@@ -7,6 +7,7 @@ import React from 'react';
 
 import {HomeScreen} from './screens/app/HomeScreen';
 import {MovementScreen} from './screens/app/MovementScreen';
+import {MovementsListScreen} from './screens/app/MovementsListScreen';
 import {MovementFormScreen, type MovementFormRouteProps} from './screens/app/MovementFormScreen';
 import {ProductsScreen} from './screens/app/ProductsScreen';
 import {ProductFormScreen, type ProductFormRouteProps} from './screens/app/ProductFormScreen';
@@ -42,6 +43,7 @@ type AppTabsParamList = {
     CategoriesApp: undefined;
     ProfileApp: undefined;
 };
+export type {AppTabsParamList};
 const AppTabs = createBottomTabNavigator<AppTabsParamList>();
 
 function AppTabNavigator() {
@@ -79,8 +81,9 @@ function AppTabNavigator() {
 // App/Auth/Root stacks
 type RootStackParamList = {App: undefined; Auth: undefined};
 type AppStackParamList = {
-    Tabs: undefined;
+    Tabs: {screen: keyof AppTabsParamList};
     NotFound: undefined;
+    MovementsList: undefined;
     MovementForm: MovementFormRouteProps;
     ProductForm: ProductFormRouteProps | undefined;
     CategoryForm: CategoryFormRouteProps | undefined;
@@ -96,6 +99,7 @@ function AppStackScreen() {
         <AppStack.Navigator screenOptions={{headerShown: true, headerStyle: {backgroundColor: '#fff'}, headerTintColor: '#212121'}}>
             <AppStack.Screen name="Tabs" options={{headerShown: false}} component={AppTabNavigator}/>
             <AppStack.Screen name="NotFound" options={{headerShown: false}} component={NotFound}/>
+            <AppStack.Screen name="MovementsList" component={MovementsListScreen} options={{title: 'Mouvements'}}/>
             <AppStack.Screen name="MovementForm" component={MovementFormScreen} options={{title: 'Mouvement de stock', presentation: 'modal'}}/>
             <AppStack.Screen name="ProductForm" component={ProductFormScreen} options={({route}) => ({title: route.params?.productId != null ? 'Modifier le produit' : 'Nouveau produit'})}/>
             <AppStack.Screen name="CategoryForm" component={CategoryFormScreen} options={({route}) => ({title: route.params?.categoryId != null ? 'Modifier la catégorie' : 'Nouvelle catégorie'})}/>

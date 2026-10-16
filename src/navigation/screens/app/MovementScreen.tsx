@@ -52,6 +52,17 @@ export function MovementScreen() {
                 </TouchableOpacity>
             </View>
 
+            <TouchableOpacity
+                style={styles.historyBtn}
+                onPress={() => navigation.navigate('MovementsList')}
+                accessibilityRole="button"
+                accessibilityLabel="Afficher tous les mouvements de stock"
+            >
+                <Ionicons name="list" size={22} color="#1565c0"/>
+                <Text style={styles.historyBtnText}>Tous les mouvements</Text>
+                <Ionicons name="chevron-forward" size={20} color="#1565c0"/>
+            </TouchableOpacity>
+
             <View style={styles.hintCard}>
                 <Ionicons name="barcode-outline" size={18} color="#1565c0"/>
                 <Text style={styles.hintText}>
@@ -74,6 +85,18 @@ const styles = StyleSheet.create({
     bigBtnTextWrap: {flex: 1, gap: 2},
     bigBtnTitle: {color: '#fff', fontSize: 18, fontWeight: '700'},
     bigBtnSub: {color: 'rgba(255,255,255,0.85)', fontSize: 13},
+    historyBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#bbdefb',
+        backgroundColor: '#f5faff',
+    },
+    historyBtnText: {color: '#1565c0', fontSize: 16, fontWeight: '600'},
     hintCard: {flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, backgroundColor: '#e3f2fd', borderRadius: 12},
     hintText: {color: '#1565c0', fontSize: 13, flex: 1},
 });
